@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>呼吸道處置・學員互考室</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🫁</text></svg>" />
+<link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+<!-- ===== 首頁 ===== -->
+<div id="view-home" class="view">
+  <div class="container">
+    <h1>🫁 呼吸道處置・學員互考室</h1>
+    <p class="subtitle">教材、題庫、技術步驟皆可即時編輯，所有人同步看到最新內容</p>
+
+    <h2 style="margin-top:1rem">個人複習</h2>
+    <div class="role-grid">
+      <a class="role-card" href="#/learn">
+        <div class="role-icon">📖</div>
+        <div class="role-title">教材複習</div>
+        <div class="role-desc">OPA / NPA / 徒手 / 氧氣</div>
+      </a>
+      <a class="role-card" href="#/tech">
+        <div class="role-icon">🎬</div>
+        <div class="role-title">技術複習</div>
+        <div class="role-desc">看圖一步步念口條</div>
+      </a>
+      <a class="role-card" href="#/solo">
+        <div class="role-icon">🎯</div>
+        <div class="role-title">單機自測</div>
+        <div class="role-desc">隨機抽題、自答自改</div>
+      </a>
+    </div>
+
+    <h2>互考 / 帶練（多人同步）</h2>
+    <div class="role-grid">
+      <a class="role-card" href="javascript:openHostSetup('quiz')">
+        <div class="role-icon">🎤</div>
+        <div class="role-title">考官開房（互考）</div>
+        <div class="role-desc">出題給學員答</div>
+      </a>
+      <a class="role-card" href="javascript:openHostSetup('tech')">
+        <div class="role-icon">🏫</div>
+        <div class="role-title">教官開房（技術帶練）</div>
+        <div class="role-desc">帶學員一步步走完技術</div>
+      </a>
+      <a class="role-card" href="javascript:openJoinSetup()">
+        <div class="role-icon">📱</div>
+        <div class="role-title">我是學員（進房）</div>
+        <div class="role-desc">輸入房號加入</div>
+      </a>
+    </div>
+
+    <div class="footer">
+      <span id="sync-indicator" class="sync-badge">同步模式偵測中…</span>
+      <span class="text-small">　·　v2026-05-23</span>
+      <br>
+      <button class="btn ghost text-small" onclick="confirmReset()" style="margin-top:0.5rem">↺ 重置內容為預設範例</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== 教材 (learn) ===== -->
+<div id="view-learn" class="view">
+  <div class="container">
+    <div class="flex-row mb-1">
+      <a class="btn ghost" href="#/">← 首頁</a>
+      <h1 style="margin:0">📖 教材複習</h1>
+      <span class="spacer"></span>
+      <span class="text-small text-dim">點 ✏️ 編輯，所有人即時同步</span>
+    </div>
+
+    <div id="learn-tabs" class="category-tabs"></div>
+    <div id="learn-content"></div>
+    <div class="text-center mt-2">
+      <button class="btn ghost" onclick="editLessonItem(null)">+ 新增項目至本分類</button>
+      <button class="btn ghost" onclick="editLessonCategory(null)">+ 新增分類</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== 技術複習（個人）===== -->
+<div id="view-tech" class="view">
+  <div class="container">
+    <div class="flex-row mb-1">
+      <a class="btn ghost" href="#/">← 首頁</a>
+      <h1 style="margin:0">🎬 技術複習</h1>
+      <span class="spacer"></span>
+    </div>
+
+    <div id="tech-picker" class="card hidden">
+      <h3 style="margin-top:0">選一個技術開始複習</h3>
+      <div id="tech-list" class="tech-list"></div>
+      <div class="mt-2">
+        <button class="btn ghost" onclick="editTechnique(null)">+ 新增技術</button>
+      </div>
+    </div>
+
+    <div id="tech-viewer" class="hidden"></div>
+  </div>
+</div>
+
+<!-- ===== 單機自測 ===== -->
+<div id="view-solo" class="view">
+  <div class="container">
+    <div class="flex-row mb-1">
+      <a class="btn ghost" href="#/">← 首頁</a>
+      <h1 style="margin:0">🎯 單機自測</h1>
+      <span class="spacer"></span>
+      <span id="solo-progress" class="text-dim text-small"></span>
+    </div>
+
+    <div id="solo-card"></div>
+    <div class="flex-row mt-2">
+      <button class="btn primary" id="solo-reveal" onclick="soloReveal()" disabled>揭曉答案</button>
+      <button class="btn" id="solo-next" onclick="soloNext()">下一題 →</button>
+      <span class="spacer"></span>
+      <button class="btn ghost" id="solo-edit-btn" onclick="editCurrentSoloQuestion()">✏️ 編輯本題</button>
+      <button class="btn ghost" onclick="editQuestion(null)">+ 新增題目</button>
+      <span class="text-dim text-small" id="solo-score"></span>
+    </div>
+  </div>
+</div>
+
+<!-- ===== 考官（host）— 互考 ===== -->
+<div id="view-host" class="view">
+  <div class="container">
+    <div class="flex-row mb-1">
+      <a class="btn ghost" href="#/">← 首頁</a>
+      <h1 style="margin:0">🎤 考官控制台</h1>
+    </div>
+
+    <div class="host-bar">
+      <span>房號：<span class="room-code" id="host-room-code">----</span></span>
+      <span class="mini">學員加入網址：<code id="host-join-url" class="text-small"></code></span>
+      <span class="spacer"></span>
+      <button class="btn" onclick="copyJoinUrl()">📋 複製網址</button>
+      <button class="btn" onclick="toggleQR('host-qr-wrap','host-qr')">📱 QR Code</button>
+    </div>
+
+    <div id="host-qr-wrap" class="card text-center hidden">
+      <div class="qr-wrap"><div id="host-qr"></div></div>
+      <p class="text-small text-dim mt-1">學員手機掃碼即進房</p>
+    </div>
+
+    <div class="card">
+      <div class="flex-row mb-1">
+        <h3 style="margin:0">👥 已加入學員 <span id="student-count" class="text-dim">(0)</span></h3>
+        <span class="spacer"></span>
+        <span id="answered-count" class="text-dim text-small"></span>
+      </div>
+      <div id="host-students-list" class="students-list">
+        <span class="text-dim text-small">等待學員加入…</span>
+      </div>
+    </div>
+
+    <div id="host-question-area"></div>
+
+    <div class="flex-row mt-2">
+      <button class="btn primary" id="host-next-btn" onclick="hostNextQuestion()">出下一題 →</button>
+      <button class="btn" id="host-reveal-btn" onclick="hostReveal()" disabled>揭曉答案</button>
+      <span class="spacer"></span>
+      <button class="btn ghost" onclick="hostBackToLobby()">回到大廳</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== 學員（play）— 互考 ===== -->
+<div id="view-play" class="view">
+  <div class="container">
+    <div class="flex-row mb-1">
+      <a class="btn ghost" href="#/">← 離開</a>
+      <h1 style="margin:0">📱 學員席</h1>
+      <span class="spacer"></span>
+      <span class="text-dim text-small">房號：<strong id="play-room-code">----</strong></span>
+    </div>
+
+    <div id="play-area">
+      <div class="card text-center">
+        <p>等待考官出題…</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== 教官（techhost）— 技術帶練 ===== -->
+<div id="view-techhost" class="view">
+  <div class="container">
+    <div class="flex-row mb-1">
+      <a class="btn ghost" href="#/">← 首頁</a>
+      <h1 style="margin:0">🏫 技術帶練控制台</h1>
+    </div>
+
+    <div class="host-bar">
+      <span>房號：<span class="room-code" id="techhost-room-code">----</span></span>
+      <span class="mini">學員加入網址：<code id="techhost-join-url" class="text-small"></code></span>
+      <span class="spacer"></span>
+      <button class="btn" onclick="copyJoinUrl('tech')">📋 複製</button>
+      <button class="btn" onclick="toggleQR('techhost-qr-wrap','techhost-qr')">📱 QR</button>
+    </div>
+
+    <div id="techhost-qr-wrap" class="card text-center hidden">
+      <div class="qr-wrap"><div id="techhost-qr"></div></div>
+    </div>
+
+    <div class="card">
+      <div class="flex-row mb-1">
+        <h3 style="margin:0">👥 已加入學員 <span id="techhost-student-count" class="text-dim">(0)</span></h3>
+      </div>
+      <div id="techhost-students-list" class="students-list">
+        <span class="text-dim text-small">等待學員加入…</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <label>選擇技術</label>
+      <select id="techhost-pick" class="input" onchange="techhostPickChange()"></select>
+    </div>
+
+    <div id="techhost-step-area"></div>
+
+    <div class="flex-row mt-2">
+      <button class="btn" onclick="techhostPrev()" id="techhost-prev">← 上一步</button>
+      <button class="btn primary" onclick="techhostNext()" id="techhost-next">下一步 →</button>
+      <span class="spacer"></span>
+      <button class="btn ghost" onclick="techhostBackToLobby()">回到大廳</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== 學員（techplay）— 技術帶練 ===== -->
+<div id="view-techplay" class="view">
+  <div class="container">
+    <div class="flex-row mb-1">
+      <a class="btn ghost" href="#/">← 離開</a>
+      <h1 style="margin:0">👀 跟著教官學技術</h1>
+      <span class="spacer"></span>
+      <span class="text-dim text-small">房號：<strong id="techplay-room-code">----</strong></span>
+    </div>
+    <div id="techplay-area">
+      <div class="card text-center">
+        <p>等教官選技術…</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== 對話框：考官開房 ===== -->
+<div id="dialog-host" class="view">
+  <div class="container">
+    <div class="card" style="max-width:480px;margin:2rem auto">
+      <h2 style="margin-top:0" id="dialog-host-title">🎤 開新房間</h2>
+      <label>你的稱呼（學員會看到）</label>
+      <input class="input" id="host-name-input" placeholder="例：教官、王教官、組長" />
+      <div class="flex-row mt-2">
+        <button class="btn ghost" onclick="location.hash='#/'">取消</button>
+        <span class="spacer"></span>
+        <button class="btn primary" onclick="confirmHost()">建立房間</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== 對話框：學員加入 ===== -->
+<div id="dialog-join" class="view">
+  <div class="container">
+    <div class="card" style="max-width:480px;margin:2rem auto">
+      <h2 style="margin-top:0">📱 加入房間</h2>
+      <label>房號（4 碼）</label>
+      <input class="input code" id="join-code-input" maxlength="4" autocapitalize="characters" />
+      <label>你的稱呼</label>
+      <input class="input" id="join-name-input" placeholder="例：小明、第三組阿志" />
+      <div class="flex-row mt-2">
+        <button class="btn ghost" onclick="location.hash='#/'">取消</button>
+        <span class="spacer"></span>
+        <button class="btn primary" onclick="confirmJoin()">進入房間</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== 編輯 Modal ===== -->
+<div id="edit-modal" class="modal-overlay hidden" onclick="if(event.target===this)closeEditModal()">
+  <div class="modal-box">
+    <div class="flex-row mb-1">
+      <h3 id="edit-modal-title" style="margin:0">編輯</h3>
+      <span class="spacer"></span>
+      <button class="btn ghost" onclick="closeEditModal()">✕</button>
+    </div>
+    <div id="edit-modal-body"></div>
+    <div class="flex-row mt-2">
+      <button class="btn danger" id="edit-modal-delete" onclick="editDelete()">🗑 刪除</button>
+      <span class="spacer"></span>
+      <button class="btn ghost" onclick="closeEditModal()">取消</button>
+      <button class="btn primary" onclick="editSave()">儲存</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast" class="toast"></div>
+
+<!-- Firebase（從 ems-assessment 沿用） -->
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-storage.js"></script>
+<!-- QR Code lib（純 client、無需後端） -->
+<script src="https://cdn.jsdelivr.net/gh/davidshimjs/qrcodejs@master/qrcode.min.js"></script>
+
+<script src="js/firebase-config.js"></script>
+<script src="js/content.js"></script>
+<script src="js/sync.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
