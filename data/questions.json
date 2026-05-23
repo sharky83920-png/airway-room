@@ -1,0 +1,159 @@
+{
+  "version": "2026-05-23",
+  "options": [
+    { "id": "htcl", "label": "壓額抬下巴 (Head-tilt Chin-lift)" },
+    { "id": "jaw", "label": "下顎推前 (Jaw Thrust)" },
+    { "id": "opa", "label": "口咽呼吸道 (OPA)" },
+    { "id": "npa", "label": "鼻咽呼吸道 (NPA)" },
+    { "id": "nc", "label": "鼻導管 1~6 L/min" },
+    { "id": "sm", "label": "一般氧氣面罩 6~10 L/min" },
+    { "id": "nrm", "label": "非再吸入式面罩 10~15 L/min" },
+    { "id": "bvm", "label": "BVM 接純氧+儲氣袋" }
+  ],
+  "questions": [
+    {
+      "id": "q01",
+      "scenario": "70 歲男性，家人發現倒臥客廳。意識不清 (E1V1M2)，無外傷史，自主呼吸 14/min 規則，SpO₂ 89%，無嘔吐或咳嗽反射。",
+      "primary": ["htcl", "opa", "nrm"],
+      "explain": "非創傷+昏迷無嘔吐反射 → 可用 Head-tilt + OPA 維持呼吸道；自主呼吸足夠但 SpO₂ 偏低 → 給高濃度氧氣（非再吸入式面罩）。",
+      "tags": ["non-trauma", "unconscious", "no-gag"]
+    },
+    {
+      "id": "q02",
+      "scenario": "25 歲機車騎士，撞擊路樹，頭盔已破裂。GCS 6 (E1V1M4)，疑似頸椎傷害，自主呼吸 8/min 淺快，SpO₂ 85%。臉部多處擦傷，鼻腔有血液與清澈液體流出。",
+      "primary": ["jaw", "bvm"],
+      "secondary": ["opa"],
+      "avoid": ["htcl", "npa"],
+      "explain": "有創傷顧慮 → 禁止 Head-tilt，用 Jaw Thrust。鼻腔有 CSF（疑顱底骨折）→ NPA 絕對禁忌。自主呼吸 < 10 且 SpO₂ 低 → 需要 BVM 輔助通氣。意識不清無嘔吐反射可同時放 OPA。",
+      "tags": ["trauma", "basilar-skull", "hypoventilation"]
+    },
+    {
+      "id": "q03",
+      "scenario": "55 歲女性，氣喘急性發作，意識清醒能對答，喘鳴聲明顯，講話只能講 2-3 個字。呼吸 28/min，SpO₂ 88%。",
+      "primary": ["nrm"],
+      "secondary": ["bvm"],
+      "avoid": ["opa", "npa"],
+      "explain": "清醒病人 → 不需要也不可放 OPA/NPA（會誘發嘔吐惡化）。SpO₂ < 90% 嚴重缺氧 → 非再吸入式面罩高濃度氧氣。若途中意識下降或呼吸衰竭再上 BVM。",
+      "tags": ["awake", "asthma", "severe-hypoxia"]
+    },
+    {
+      "id": "q04",
+      "scenario": "8 歲女童溺水獲救，剛從泳池撈起。無自主呼吸、頸動脈微弱，意識昏迷無反射。無外傷史。",
+      "primary": ["htcl", "opa", "bvm"],
+      "explain": "兒童溺水無外傷顧慮 → Head-tilt（兒童注意勿過度仰頭，採嗅吸位）。昏迷無反射 → OPA 維持呼吸道（兒童用壓舌板順弧線置入，不旋轉）。無自主呼吸 → BVM 通氣，速率約每 2-3 秒一口（兒科 15-20 次/分）。",
+      "tags": ["pediatric", "drowning", "apnea"]
+    },
+    {
+      "id": "q05",
+      "scenario": "60 歲男性，急性中風送醫，左側肢體無力，意識嗜睡 (E3V4M5)，呼吸 18/min 規則，SpO₂ 94%。仍有吞嚥反射與輕微咳嗽反射。",
+      "primary": ["npa", "nc"],
+      "avoid": ["opa"],
+      "explain": "意識嗜睡但仍有咳嗽反射 → OPA 會誘發嘔吐，改用較易耐受的 NPA。SpO₂ 94% 屬輕微低氧 → 鼻導管即可，不需高濃度氧氣。",
+      "tags": ["stroke", "partial-gag", "mild-hypoxia"]
+    },
+    {
+      "id": "q06",
+      "scenario": "45 歲男性疑似海洛因過量，意識昏迷 (E1V1M1)，瞳孔針尖大小，呼吸 4/min 淺，SpO₂ 78%，無外傷史。",
+      "primary": ["htcl", "opa", "bvm"],
+      "explain": "鴉片類過量典型呼吸抑制 → 立即 BVM 輔助通氣。非創傷昏迷無反射 → Head-tilt + OPA。後續配合給予 Naloxone。",
+      "tags": ["overdose", "hypoventilation", "non-trauma"]
+    },
+    {
+      "id": "q07",
+      "scenario": "70 歲 COPD 男性，急性喘起來，意識清醒但躁動，呼吸 26/min，SpO₂ 84%。平時在家有用居家氧氣 2 L/min。",
+      "primary": ["nc"],
+      "secondary": ["sm"],
+      "avoid": ["nrm"],
+      "explain": "COPD 病人需謹慎避免高濃度氧氣抑制低氧呼吸驅力。起始給 2 L/min 鼻導管，目標 SpO₂ 88-92% 即可，不要追到 100%。若仍不足可考慮文丘里面罩或一般面罩 6 L/min。非再吸入式 80-100% 對 COPD 是潛在傷害。",
+      "tags": ["copd", "controlled-o2"]
+    },
+    {
+      "id": "q08",
+      "scenario": "30 歲女性癲癇發作中，全身強直陣攣，意識喪失，牙關緊咬，呼吸暫時無法評估，臉色發紺。無外傷史。",
+      "primary": ["npa", "nrm"],
+      "avoid": ["opa"],
+      "explain": "強直陣攣期牙關緊咬 → OPA 放不進去也不該硬塞（撬牙會傷牙與口腔）。改用 NPA 維持呼吸道。發作緩解後重新評估，準備高濃度氧氣或 BVM。",
+      "tags": ["seizure", "trismus"]
+    },
+    {
+      "id": "q09",
+      "scenario": "65 歲男性，胸痛突然倒下，旁觀者開始 CPR。到場時無脈搏無呼吸，意識喪失。無創傷史。",
+      "primary": ["htcl", "opa", "bvm"],
+      "explain": "心跳停止 → 持續高品質 CPR + BVM 通氣（30:2 直到放 ETT/LMA 才改 8-10 次/分不打斷胸壓）。非創傷昏迷 → Head-tilt + OPA。",
+      "tags": ["cardiac-arrest", "cpr"]
+    },
+    {
+      "id": "q10",
+      "scenario": "5 個月大嬰兒，發燒抽搐後意識不清，呼吸 30/min 規則，SpO₂ 96%，無外傷。",
+      "primary": ["htcl", "nc"],
+      "avoid": ["opa", "npa"],
+      "explain": "嬰兒採嗅吸位（不過度仰頭），維持氣道。SpO₂ 96% 邊緣 → 鼻導管或吹氧（blow-by）即可。嬰兒 OPA/NPA 一般不是第一線選擇，除非有明確阻塞且其他無效。",
+      "tags": ["pediatric", "febrile-seizure"]
+    },
+    {
+      "id": "q11",
+      "scenario": "50 歲男性，工地高處墜落 3 公尺。意識喪失 (E1V1M3)，後頸壓痛明顯，自主呼吸 12/min 規則，SpO₂ 93%。無嘔吐反射。",
+      "primary": ["jaw", "opa", "nrm"],
+      "avoid": ["htcl"],
+      "explain": "明確的高處墜落+後頸壓痛 → 頸椎保護優先，禁用 Head-tilt，改 Jaw Thrust。昏迷無反射可放 OPA。呼吸足夠但 SpO₂ 偏低 → 非再吸入式面罩。",
+      "tags": ["trauma", "spinal", "stable-breathing"]
+    },
+    {
+      "id": "q12",
+      "scenario": "80 歲女性，住安養機構，意識嗜睡，臉色蒼白，咳嗽中可聽到痰音，呼吸 22/min，SpO₂ 87%。仍有強烈咳嗽反射。",
+      "primary": ["sm"],
+      "secondary": ["npa"],
+      "avoid": ["opa"],
+      "explain": "有強烈咳嗽反射 → OPA 會誘發嘔吐惡化吸入。痰音明顯應先抽吸再評估。SpO₂ 87% 可先用一般面罩 6-10 L/min，視反應升降。NPA 可考慮輔助維持呼吸道。",
+      "tags": ["geriatric", "secretions", "suction-first"]
+    },
+    {
+      "id": "q13",
+      "scenario": "35 歲男性，車禍後到場時意識清醒，主訴頸部疼痛，呼吸 16/min 規則，SpO₂ 99%。無臉部外傷。",
+      "primary": ["nc"],
+      "avoid": ["htcl", "jaw", "opa", "npa"],
+      "explain": "意識清醒能維持自己呼吸道 → 不需任何徒手/輔助呼吸道。頸椎需固定但不需 Jaw Thrust。SpO₂ 99% 一般不需給氧，創傷現場可考慮鼻導管預防性低流量。",
+      "tags": ["awake", "trauma", "no-airway-intervention"]
+    },
+    {
+      "id": "q14",
+      "scenario": "60 歲女性，自殺企圖服用大量安眠藥被發現。GCS 5，無外傷，自主呼吸 6/min 淺，SpO₂ 80%，嘴角有殘留藥粉與少量嘔吐物。",
+      "primary": ["htcl", "opa", "bvm"],
+      "secondary": ["npa"],
+      "explain": "深度昏迷無反射 → Head-tilt + OPA。呼吸 < 10 且嚴重缺氧 → BVM。注意嘔吐物先抽吸再放呼吸道；若擔心 OPA 引發嘔吐可改 NPA。",
+      "tags": ["overdose", "vomit-risk", "suction-first"]
+    },
+    {
+      "id": "q15",
+      "scenario": "20 歲男性，車禍後昏迷，雙眼瘀青（浣熊眼），耳後瘀青（Battle's sign），耳道有清澈液體流出。GCS 6，呼吸 10/min 淺，SpO₂ 88%。",
+      "primary": ["jaw", "opa", "bvm"],
+      "avoid": ["htcl", "npa"],
+      "explain": "顱底骨折三大徵象齊全 → NPA 絕對禁忌（可能誤入顱內）。創傷頸椎顧慮 → Jaw Thrust。昏迷無反射 → OPA。呼吸不足 → BVM。",
+      "tags": ["basilar-skull", "trauma", "npa-contraindicated"]
+    },
+    {
+      "id": "q16",
+      "scenario": "55 歲女性，急性 ST 段抬高型心肌梗塞，意識清醒、能對答，主訴胸悶痛。呼吸 20/min，SpO₂ 96%。",
+      "primary": ["nc"],
+      "avoid": ["nrm", "sm"],
+      "explain": "新指引：AMI 病人若 SpO₂ ≥ 94% 不需常規給氧（過度供氧反而增加心肌損傷與死亡率）。若給也僅鼻導管低流量。SpO₂ < 94% 才考慮一般面罩。",
+      "tags": ["ami", "spo2-target", "evidence-based"]
+    },
+    {
+      "id": "q17",
+      "scenario": "40 歲男性，工廠火災後被救出，意識清醒但聲音沙啞、咳出黑色痰，臉部與鼻毛燒焦。呼吸 22/min，SpO₂ 92%。",
+      "primary": ["nrm"],
+      "secondary": ["bvm"],
+      "explain": "吸入性燒傷高度懷疑（聲音沙啞+鼻毛燒焦+黑痰）→ CO 中毒可能使 SpO₂ 偽高，無論 SpO₂ 多少都給 100% 高濃度氧氣（縮短 CO 半衰期）。若聲門水腫進展可能需 BVM 甚至進階呼吸道。",
+      "tags": ["inhalation-burn", "co-poisoning", "false-spo2"]
+    },
+    {
+      "id": "q18",
+      "scenario": "73 歲男性，意識昏迷 (E1V1M3)，鼻導管 4 L/min 下 SpO₂ 92%，自主呼吸 12/min 規則。有強烈咳嗽反射，無外傷。",
+      "primary": ["npa", "sm"],
+      "avoid": ["opa"],
+      "explain": "意識不清+仍有咳嗽反射 → 強烈 OPA 禁忌（會嘔吐吸入）。改 NPA 維持呼吸道。SpO₂ 92% 在鼻導管下偏低，升級到一般面罩 6-10 L/min。",
+      "tags": ["partial-gag", "upgrade-o2"]
+    }
+  ]
+}
