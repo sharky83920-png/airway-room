@@ -325,8 +325,9 @@ function soloReveal() {
   if (S.soloRevealed) return;
   S.soloRevealed = true;
   const q = S.soloQueue[S.soloIdx];
-  const correctSet = new Set(q.primary || []);
-  const avoidSet = new Set(q.avoid || []);
+  const isCustom = !!(q.choices && q.choices.length);
+  const correctSet = new Set(isCustom ? (q.correct || []) : (q.primary || []));
+  const avoidSet = new Set(isCustom ? [] : (q.avoid || []));
   const selected = new Set(S.soloChoice || []);
   let allCorrect = true;
   for (const c of correctSet) if (!selected.has(c)) allCorrect = false;
@@ -420,17 +421,20 @@ function renderHostAnswers(answers) {
   });
   const C = Content.get();
   const countsEl = document.getElementById('host-answer-counts');
-  if (countsEl) {
-    const optIds = (C.questions.options || []).map(o => o.id);
-    countsEl.innerHTML = optIds.map(optId => {
-      const isCorrect = (q.primary || []).includes(optId);
-      const isAvoid = (q.avoid || []).includes(optId);
-      const tag = isCorrect ? ' ✅' : isAvoid ? ' ❌' : '';
-      const cnt = counts[optId] || 0;
-      if (cnt === 0 && !isCorrect && !isAvoid) return '';
-      return `<div class="count-row"><span>${escapeHtml(C.optionMap[optId] || optId)}${tag}</span><strong>${cnt}</strong></div>`;
-    }).filter(Boolean).join('');
-  }
+  if (!countsEl) return;
+  const isCustom = !!(q.choices && q.choices.length);
+  const options = isCustom ? q.choices : (C.questions.options || []);
+  const correctIds = isCustom ? (q.correct || []) : (q.primary || []);
+  const avoidIds = isCustom ? [] : (q.avoid || []);
+  countsEl.innerHTML = options.map(opt => {
+    const isCorrect = correctIds.includes(opt.id);
+    const isAvoid = avoidIds.includes(opt.id);
+    const tag = isCorrect ? ' ✅' : isAvoid ? ' ❌' : '';
+    const cnt = counts[opt.id] || 0;
+    if (cnt === 0 && !isCorrect && !isAvoid) return '';
+    const prefix = isCustom ? `${opt.id.toUpperCase()}. ` : '';
+    return `<div class="count-row"><span>${prefix}${escapeHtml(opt.label)}${tag}</span><strong>${cnt}</strong></div>`;
+  }).filter(Boolean).join('');
 }
 
 function updateHostAnsweredChips() {
@@ -477,11 +481,13 @@ async function hostNextQuestion() {
   await S.room.clearAnswers();
   const q = S.hostQueue[S.hostCurrentIdx];
   const C = Content.get();
+  const isCustom = !!(q.choices && q.choices.length);
   await S.room.broadcast({
     kind: 'question',
     qid: q.id,
     scenario: q.scenario,
-    options: C.questions.options,
+    options: isCustom ? q.choices : C.questions.options,
+    choices: q.choices || null,
     revealed: false
   });
   renderHostQuestionArea();
@@ -492,12 +498,15 @@ async function hostReveal() {
   S.hostRevealed = true;
   const q = S.hostQueue[S.hostCurrentIdx];
   const C = Content.get();
+  const isCustom = !!(q.choices && q.choices.length);
   await S.room.broadcast({
     kind: 'question',
     qid: q.id,
     scenario: q.scenario,
-    options: C.questions.options,
+    options: isCustom ? q.choices : C.questions.options,
+    choices: q.choices || null,
     revealed: true,
+    correct: q.correct || [],
     primary: q.primary || [],
     secondary: q.secondary || [],
     avoid: q.avoid || [],
@@ -554,12 +563,13 @@ function renderPlay(state) {
     const q = {
       id: state.qid,
       scenario: state.scenario,
+      choices: state.choices,
+      correct: state.correct,
       primary: state.primary,
       secondary: state.secondary,
       avoid: state.avoid,
       explain: state.explain
     };
-    // 把選項放到 Content 暫時覆寫（renderQuestion 從 Content 拿）
     let html = renderQuestion(q, {
       revealed: !!state.revealed,
       selectedSet: new Set(S.playChoice || []),
@@ -575,8 +585,9 @@ function renderPlay(state) {
         <span class="text-dim text-small">可複選</span>
       </div>`;
     } else {
-      const correctSet = new Set(state.primary || []);
-      const avoidSet = new Set(state.avoid || []);
+      const isCustom = !!(state.choices && state.choices.length);
+      const correctSet = new Set(isCustom ? (state.correct || []) : (state.primary || []));
+      const avoidSet = new Set(isCustom ? [] : (state.avoid || []));
       const sel = new Set(S.playChoice || []);
       let missed = [...correctSet].filter(c => !sel.has(c));
       let wrong = [...sel].filter(s => avoidSet.has(s));
@@ -740,13 +751,26 @@ function renderTechPlay(state) {
 }
 
 // ===== 共用：題目渲染 =====
+// 自動偵測題型：
+//   - q.choices 存在 → 自訂 4 選項格式，正解看 q.correct
+//   - 否則 → 固定 8 選項格式，正解看 q.primary/secondary/avoid
 function renderQuestion(q, opts) {
   const { revealed, selectedSet, onClick, disabled, optionsOverride } = opts;
-  const primary = new Set(q.primary || []);
-  const secondary = new Set(q.secondary || []);
-  const avoid = new Set(q.avoid || []);
   const C = Content.get();
-  const options = optionsOverride || (C.questions && C.questions.options) || [];
+  const isCustom = !!(q.choices && q.choices.length);
+
+  let options, correctSet, secondarySet, avoidSet;
+  if (isCustom) {
+    options = q.choices;
+    correctSet = new Set(q.correct || []);
+    secondarySet = new Set();
+    avoidSet = new Set();
+  } else {
+    options = optionsOverride || (C.questions && C.questions.options) || [];
+    correctSet = new Set(q.primary || []);
+    secondarySet = new Set(q.secondary || []);
+    avoidSet = new Set(q.avoid || []);
+  }
 
   let html = '';
   if (q.scenario) html += `<div class="scenario-box"><span class="qid">${q.id || ''}</span>${escapeHtml(q.scenario)}</div>`;
@@ -756,13 +780,14 @@ function renderQuestion(q, opts) {
     let cls = 'opt-btn';
     let tag = '';
     if (revealed) {
-      if (primary.has(opt.id)) { cls += ' correct'; tag = '<span class="opt-tag correct-tag">應做</span>'; }
-      else if (secondary.has(opt.id)) { cls += ' secondary-correct'; tag = '<span class="opt-tag secondary-tag">可考慮</span>'; }
-      else if (avoid.has(opt.id)) { cls += ' wrong-avoid'; tag = '<span class="opt-tag avoid-tag">禁忌</span>'; }
+      if (correctSet.has(opt.id)) { cls += ' correct'; tag = '<span class="opt-tag correct-tag">正解</span>'; }
+      else if (secondarySet.has(opt.id)) { cls += ' secondary-correct'; tag = '<span class="opt-tag secondary-tag">可考慮</span>'; }
+      else if (avoidSet.has(opt.id)) { cls += ' wrong-avoid'; tag = '<span class="opt-tag avoid-tag">禁忌</span>'; }
     } else if (sel) cls += ' selected';
     const click = (!disabled && onClick) ? `onclick="${onClick}('${opt.id}')"` : '';
     const dis = (disabled || revealed) ? 'disabled' : '';
-    html += `<button class="${cls}" ${click} ${dis}>${escapeHtml(opt.label)}${tag}</button>`;
+    const prefix = isCustom ? `<strong style="margin-right:0.5rem">${opt.id.toUpperCase()}.</strong>` : '';
+    html += `<button class="${cls}" ${click} ${dis}>${prefix}${escapeHtml(opt.label)}${tag}</button>`;
   });
   html += `</div>`;
   if (revealed && q.explain) html += `<div class="explain-box"><strong>解釋：</strong>${escapeHtml(q.explain)}</div>`;
@@ -839,38 +864,75 @@ function editLessonItem(id) {
 }
 
 // ---- Question ----
+// 兩種題型：
+//   A. 自訂選項（新增題目預設）：q.choices = [{id,label}] + q.correct = [id,...]
+//   B. 固定 8 選項（舊題）：q.primary/secondary/avoid 對應 Content.questions.options
 function editQuestion(id) {
   const C = Content.get();
   const qs = C.questions.questions || [];
   const isNew = !id;
   const q = isNew ? {
-    id: 'q' + (qs.length + 1).toString().padStart(2, '0'),
-    scenario: '', primary: [], secondary: [], avoid: [], explain: '', tags: []
+    id: 'q' + Date.now().toString().slice(-4),
+    scenario: '',
+    choices: [
+      { id: 'a', label: '' },
+      { id: 'b', label: '' },
+      { id: 'c', label: '' },
+      { id: 'd', label: '' }
+    ],
+    correct: [],
+    explain: ''
   } : qs.find(x => x.id === id);
   if (!q) return;
-  const opts = C.questions.options || [];
-  const checkboxes = (field, values) => opts.map(o =>
-    `<label class="flex-row" style="font-size:0.9rem;color:var(--text);font-weight:normal">
-       <input type="checkbox" name="eq-${field}" value="${o.id}" ${values.includes(o.id) ? 'checked' : ''}/>
-       ${escapeHtml(o.label)}
-     </label>`).join('');
-  const body = `
-    <label>題號（不可重複）</label>
-    <input class="input" id="eq-id" value="${escapeAttr(q.id)}" ${isNew ? '' : 'disabled'} />
-    <label>情境描述</label>
-    <textarea class="textarea" id="eq-scenario" style="min-height:120px">${escapeHtml(q.scenario || '')}</textarea>
-    <label>應做（primary）— 完全正確必選</label>
-    <div>${checkboxes('primary', q.primary || [])}</div>
-    <label>可考慮（secondary）— 非必選，得分中性</label>
-    <div>${checkboxes('secondary', q.secondary || [])}</div>
-    <label>禁忌（avoid）— 選了會被標 ❌</label>
-    <div>${checkboxes('avoid', q.avoid || [])}</div>
-    <label>解釋（揭曉時顯示）</label>
-    <textarea class="textarea" id="eq-explain" style="min-height:100px">${escapeHtml(q.explain || '')}</textarea>
-    <label>標籤（逗號分隔，可空）</label>
-    <input class="input" id="eq-tags" value="${escapeAttr((q.tags || []).join(','))}" />
-  `;
-  openEditModal(isNew ? '新增題目' : '編輯題目', body, { kind: 'question', id: q.id, isNew });
+
+  // 偵測題型
+  const isCustom = !!q.choices;
+  let body;
+  if (isCustom) {
+    // 快速模式：4 個自訂選項 + 4 個正解 checkbox
+    body = `
+      <label>題號（不可重複）</label>
+      <input class="input" id="eq-id" value="${escapeAttr(q.id)}" ${isNew ? '' : 'disabled'} />
+      <label>情境（題目敘述）</label>
+      <textarea class="textarea" id="eq-scenario" style="min-height:100px" placeholder="例：昏迷，有呼吸，有鼾音，應該…？">${escapeHtml(q.scenario || '')}</textarea>
+      <label>4 個選項（勾選正解，可複選）</label>
+      <div id="eq-choices-wrap">
+        ${(q.choices || []).map((c, i) => `
+          <div class="flex-row mb-1" style="align-items:center">
+            <input type="checkbox" id="eq-correct-${c.id}" value="${c.id}" ${(q.correct||[]).includes(c.id) ? 'checked' : ''} style="width:20px;height:20px;flex:0 0 20px" />
+            <strong style="width:1.5rem;text-align:center">${c.id.toUpperCase()}</strong>
+            <input class="input" id="eq-choice-${c.id}" value="${escapeAttr(c.label)}" placeholder="選項 ${c.id.toUpperCase()} 文字" />
+          </div>
+        `).join('')}
+      </div>
+      <label>解釋（揭曉時顯示，可空）</label>
+      <textarea class="textarea" id="eq-explain" style="min-height:80px">${escapeHtml(q.explain || '')}</textarea>
+    `;
+  } else {
+    // 舊題進階模式：固定 8 選項
+    const opts = C.questions.options || [];
+    const checkboxes = (field, values) => opts.map(o =>
+      `<label class="flex-row" style="font-size:0.9rem;color:var(--text);font-weight:normal">
+         <input type="checkbox" name="eq-${field}" value="${o.id}" ${values.includes(o.id) ? 'checked' : ''}/>
+         ${escapeHtml(o.label)}
+       </label>`).join('');
+    body = `
+      <p class="text-dim text-small">這是進階多選題（固定 8 選項）。新題建議用「快速 4 選」格式。</p>
+      <label>題號（不可重複）</label>
+      <input class="input" id="eq-id" value="${escapeAttr(q.id)}" disabled />
+      <label>情境描述</label>
+      <textarea class="textarea" id="eq-scenario" style="min-height:120px">${escapeHtml(q.scenario || '')}</textarea>
+      <label>應做（primary）</label>
+      <div>${checkboxes('primary', q.primary || [])}</div>
+      <label>可考慮（secondary）</label>
+      <div>${checkboxes('secondary', q.secondary || [])}</div>
+      <label>禁忌（avoid）</label>
+      <div>${checkboxes('avoid', q.avoid || [])}</div>
+      <label>解釋</label>
+      <textarea class="textarea" id="eq-explain" style="min-height:100px">${escapeHtml(q.explain || '')}</textarea>
+    `;
+  }
+  openEditModal(isNew ? '新增題目（快速）' : '編輯題目', body, { kind: 'question', id: q.id, isNew, isCustom });
 }
 
 // ---- Technique ----
@@ -1014,16 +1076,35 @@ async function editSave() {
     else if (S.editCtx.kind === 'question') {
       const questions = JSON.parse(JSON.stringify(C.questions));
       const id = document.getElementById('eq-id').value.trim();
-      const getChecked = (field) => Array.from(document.querySelectorAll(`input[name="eq-${field}"]:checked`)).map(el => el.value);
-      const q = {
-        id,
-        scenario: document.getElementById('eq-scenario').value.trim(),
-        primary: getChecked('primary'),
-        secondary: getChecked('secondary'),
-        avoid: getChecked('avoid'),
-        explain: document.getElementById('eq-explain').value.trim(),
-        tags: document.getElementById('eq-tags').value.split(',').map(s => s.trim()).filter(Boolean)
-      };
+      let q;
+      if (S.editCtx.isCustom) {
+        // 快速 4 選格式
+        const choices = ['a','b','c','d'].map(letter => ({
+          id: letter,
+          label: (document.getElementById(`eq-choice-${letter}`)?.value || '').trim()
+        })).filter(c => c.label);
+        const correct = ['a','b','c','d'].filter(letter => document.getElementById(`eq-correct-${letter}`)?.checked);
+        if (choices.length < 2) { toast('至少要 2 個選項'); return; }
+        if (correct.length === 0) { toast('至少勾一個正解'); return; }
+        q = {
+          id,
+          scenario: document.getElementById('eq-scenario').value.trim(),
+          choices,
+          correct,
+          explain: document.getElementById('eq-explain').value.trim()
+        };
+      } else {
+        // 舊式進階格式
+        const getChecked = (field) => Array.from(document.querySelectorAll(`input[name="eq-${field}"]:checked`)).map(el => el.value);
+        q = {
+          id,
+          scenario: document.getElementById('eq-scenario').value.trim(),
+          primary: getChecked('primary'),
+          secondary: getChecked('secondary'),
+          avoid: getChecked('avoid'),
+          explain: document.getElementById('eq-explain').value.trim()
+        };
+      }
       if (!q.scenario) { toast('情境必填'); return; }
       if (S.editCtx.isNew) {
         if (questions.questions.find(x => x.id === id)) { toast('題號已存在'); return; }
@@ -1091,17 +1172,6 @@ async function editDelete() {
   } catch (e) {
     console.error(e);
     toast('刪除失敗：' + e.message);
-  }
-}
-
-// ===== Reset =====
-async function confirmReset() {
-  if (!confirm('將所有教材、題庫、技術步驟重置為內建預設範例。此動作會覆蓋雲端內容，所有人都會被影響。確定嗎？')) return;
-  try {
-    await Content.resetToDefaults();
-    toast('已重置為預設範例');
-  } catch (e) {
-    toast('重置失敗：' + e.message);
   }
 }
 
